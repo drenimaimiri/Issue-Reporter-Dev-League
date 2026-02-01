@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Issues - Issue Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">Issue Tracker</a>
+      
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span class="hamburger"></span>
+      </button>
+      
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="nav-link">Overview</a></li>
+        <li><a href="report.html" class="nav-link">New Issue</a></li>
+        <li><a href="view.html" class="nav-link active">All Issues</a></li>
+      </ul>
+    </div>
+  </nav>
+<br>
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Page Header -->
+      <h1 style="text-align: center;">All Issues</h1>
+      <p style="text-align: center; color: grey;">Browse, filter, and manage all tracked issues in one place.</p>
+   <br>
+<br>
+    <!-- Filter & Actions Bar -->
+    <section class="filter-section">
+      <div class="container">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label for="filterPriority">Priority</label>
+            <select id="filterPriority">
+              <option value="all">All Priorities</option>
+              <option value="high">High Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="low">Low Priority</option>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="filterStatus">Status</label>
+            <select id="filterStatus">
+              <option value="all">All Statuses</option>
+              <option value="open">Open Only</option>
+              <option value="resolved">Resolved Only</option>
+            </select>
+          </div>
+          
+          <div class="filter-actions">
+            <button onclick="loadExampleIssues()" class="btn btn-secondary">Load Examples</button>
+            <button onclick="clearAllIssues()" class="btn btn-danger">Clear All</button>
+          </div>
+        </div>
+        
+        <!-- Issue count -->
+        <div class="issue-count">
+          Showing <span id="displayedCount">0</span> of <span id="totalCount">0</span> issues
+        </div>
+      </div>
+    </section>
+
+    <!-- Issues List Section -->
+    <section class="section">
+      <div class="container">
+        <!-- Issues will be dynamically inserted here -->
+        <div id="issuesList" class="issues-list">
+          <p class="no-issues" id="noIssuesMessage">
+            No issues found. <a href="report.html">Create your first issue</a> or 
+            <button onclick="loadExampleIssues()" class="link-btn">load example issues</button>.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Issue Tracker &mdash; Built with HTML, CSS & JavaScript</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // DOM Elements for view page
+    const issuesList = document.getElementById('issuesList');
+    const noIssuesMessage = document.getElementById('noIssuesMessage');
+    const filterPriority = document.getElementById('filterPriority');
+    const filterStatus = document.getElementById('filterStatus');
+    const displayedCount = document.getElementById('displayedCount');
+    const totalCount = document.getElementById('totalCount');
+
+    // Example issues data - 10 issues
+    const exampleIssues = [
+      {
+        id: 'ex1',
+        title: 'Login button not responding on mobile devices',
+        description: 'When attempting to log in on mobile devices (both iOS and Android), the login button does not respond to taps. Users are unable to authenticate through mobile browsers. This affects a significant portion of our user base.',
+        priority: 'high',
+        date: new Date(Date.now() - 86400000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex2',
+        title: 'Dashboard performance degradation',
+        description: 'The main dashboard takes over 5 seconds to load initial data. Performance monitoring shows the bottleneck is in the API response time for user statistics. Multiple users have reported this issue.',
+        priority: 'medium',
+        date: new Date(Date.now() - 172800000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex3',
+        title: 'Typo in welcome notification',
+        description: 'There is a spelling mistake in the welcome notification message. "Welcom" should be corrected to "Welcome". This is a minor cosmetic issue that needs addressing.',
+        priority: 'low',
+        date: new Date(Date.now() - 259200000).toISOString(),
+        resolved: true
+      },
+      {
+        id: 'ex4',
+        title: 'Payment gateway timeout for international cards',
+        description: 'International credit card transactions are timing out during the payment processing step. The gateway returns a 504 error after 30 seconds. This is blocking international revenue.',
+        priority: 'high',
+        date: new Date(Date.now() - 43200000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex5',
+        title: 'Email notification delivery delays',
+        description: 'Users report receiving email notifications 2-3 hours after the triggering event. This affects password reset flows and order confirmations. Email queue may need investigation.',
+        priority: 'medium',
+        date: new Date(Date.now() - 345600000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex6',
+        title: 'Database connection pool exhaustion',
+        description: 'Under high load, the application runs out of database connections causing 500 errors. Need to implement connection pooling or increase pool size. Affecting production during peak hours.',
+        priority: 'high',
+        date: new Date(Date.now() - 120000000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex7',
+        title: 'Dark mode toggle not persisting',
+        description: 'When users enable dark mode and refresh the page, the setting resets to light mode. The preference should be stored in localStorage and applied on page load.',
+        priority: 'low',
+        date: new Date(Date.now() - 400000000).toISOString(),
+        resolved: true
+      },
+      {
+        id: 'ex8',
+        title: 'File upload size limit error message unclear',
+        description: 'When users try to upload files larger than 10MB, the error message just says "Upload failed" without explaining the size limit. Need more descriptive error handling.',
+        priority: 'medium',
+        date: new Date(Date.now() - 500000000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex9',
+        title: 'Search functionality returns no results for partial matches',
+        description: 'The search feature only works with exact matches. Users expect partial matching and fuzzy search. For example, searching "admin" should return "administrator".',
+        priority: 'medium',
+        date: new Date(Date.now() - 600000000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex10',
+        title: 'SSL certificate expiring in 7 days',
+        description: 'The SSL certificate for the main domain is expiring soon. Need to renew before expiration to avoid security warnings and service disruption. Auto-renewal may have failed.',
+        priority: 'high',
+        date: new Date(Date.now() - 50000000).toISOString(),
+        resolved: false
+      }
+    ];
+
+    /**
+     * Loads example issues into localStorage
+     */
+    function loadExampleIssues() {
+      console.log('[v0] Loading example issues...');
+      const existingIssues = getIssuesFromStorage();
+      console.log('[v0] Existing issues:', existingIssues.length);
+      
+      // Add example issues that don't already exist
+      const newExamples = exampleIssues.filter(ex => 
+        !existingIssues.some(existing => existing.id === ex.id)
+      );
+      
+      console.log('[v0] New examples to add:', newExamples.length);
+      
+      if (newExamples.length === 0) {
+        alert('Example issues are already loaded.');
+        return;
+      }
+      
+      const updatedIssues = [...newExamples, ...existingIssues];
+      saveIssuesToStorage(updatedIssues);
+      console.log('[v0] Saved issues, total now:', updatedIssues.length);
+      
+      renderFilteredIssues();
+    }
+
+    /**
+     * Clears all issues from localStorage
+     */
+    function clearAllIssues() {
+      if (confirm('Are you sure you want to delete all issues? This action cannot be undone.')) {
+        saveIssuesToStorage([]);
+        renderFilteredIssues();
+      }
+    }
+
+    /**
+     * Renders issues based on current filter settings
+     */
+    function renderFilteredIssues() {
+      console.log('[v0] Rendering filtered issues...');
+      const issues = getIssuesFromStorage();
+      console.log('[v0] Total issues from storage:', issues.length);
+      const priorityFilter = filterPriority.value;
+      const statusFilter = filterStatus.value;
+      
+      // Apply filters
+      let filteredIssues = issues.filter(issue => {
+        // Priority filter
+        if (priorityFilter !== 'all' && issue.priority !== priorityFilter) {
+          return false;
+        }
+        
+        // Status filter
+        if (statusFilter === 'open' && issue.resolved) {
+          return false;
+        }
+        if (statusFilter === 'resolved' && !issue.resolved) {
+          return false;
+        }
+        
+        return true;
+      });
+      
+      // Update counts
+      totalCount.textContent = issues.length;
+      displayedCount.textContent = filteredIssues.length;
+      
+      // Check if there are any issues
+      if (filteredIssues.length === 0) {
+        noIssuesMessage.style.display = 'block';
+        const issueCards = issuesList.querySelectorAll('.issue-card');
+        issueCards.forEach(card => card.remove());
+        return;
+      }
+      
+      noIssuesMessage.style.display = 'none';
+      
+      // Generate HTML for all filtered issues
+      const issuesHTML = filteredIssues.map(issue => createIssueCardHTML(issue)).join('');
+      issuesList.innerHTML = issuesHTML;
+    }
+
+    /**
+     * Creates HTML for a single issue card
+     */
+    function createIssueCardHTML(issue) {
+      const priorityClass = `priority-${issue.priority}`;
+      const resolvedClass = issue.resolved ? 'resolved' : '';
+      
+      return `
+        <article class="issue-card ${resolvedClass}" data-id="${issue.id}">
+          <div class="issue-header">
+            <h3 class="issue-title">${escapeHTML(issue.title)}</h3>
+            <span class="priority-badge ${priorityClass}">${issue.priority}</span>
+          </div>
+          
+          <p class="issue-description">${escapeHTML(issue.description)}</p>
+          
+          <div class="issue-meta">
+            <span class="issue-date">${formatDate(issue.date)}</span>
+            
+            <div class="issue-actions">
+              ${issue.resolved 
+                ? '<span class="resolved-badge">Resolved</span>' 
+                : `<button class="btn btn-success" onclick="resolveIssue('${issue.id}')">Mark Resolved</button>`
+              }
+              <button class="btn btn-danger" onclick="removeIssue('${issue.id}')">Delete</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    /**
+     * Resolves an issue
+     */
+    function resolveIssue(issueId) {
+      toggleResolve(issueId);
+      renderFilteredIssues();
+    }
+
+    /**
+     * Removes an issue
+     */
+    function removeIssue(issueId) {
+      if (confirm('Delete this issue permanently?')) {
+        deleteIssue(issueId);
+        renderFilteredIssues();
+      }
+    }
+
+    // Event listeners for filters
+    filterPriority.addEventListener('change', renderFilteredIssues);
+    filterStatus.addEventListener('change', renderFilteredIssues);
+
+    // Initialize the page immediately (script is at bottom of body)
+    renderFilteredIssues();
+    console.log('[v0] View page initialized, issues loaded:', getIssuesFromStorage().length);
+  </script>
+</body>
+</html>
+

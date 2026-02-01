@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue Reporter - Track & Manage Issues</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html"  class="nav-brand">IssueTracker</a>
+      
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span class="hamburger"></span>
+      </button>
+      
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="nav-link active">Overview</a></li>
+        <li><a href="report.html" class="nav-link">New Issue</a></li>
+        <li><a href="view.html" class="nav-link">All Issues</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Hero Section -->
+    <section class="hero">
+      <h1>Issue Tracker</h1>
+      <p>A streamlined way to track, prioritize, and resolve issues. Built for teams that move fast.</p>
+    </section>
+
+    <!-- Features Section -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Quick Actions</h2>
+        </div>
+        
+        <div class="features-grid">
+          <!-- Feature 1 -->
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </div>
+            <h3>Create Issue</h3>
+            <p>Submit new issues with detailed descriptions, priorities, and context for your team.</p>
+            <a href="report.html" class="btn btn-primary">New Issue</a>
+          </div>
+          
+          <!-- Feature 2 -->
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+            </div>
+            <h3>Browse Issues</h3>
+            <p>View and filter all reported issues by priority, status, and date created.</p>
+            <a href="view.html" class="btn btn-primary">View All</a>
+          </div>
+          
+          <!-- Feature 3 -->
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <h3>Resolve & Track</h3>
+            <p>Mark issues as resolved and track progress with real-time statistics.</p>
+            <a href="view.html" class="btn btn-primary">Manage</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="section stats-section">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Statistics</h2>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-number" id="totalIssues">0</span>
+            <span class="stat-label">Total Issues</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="openIssues">0</span>
+            <span class="stat-label">Open</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-number" id="resolvedIssues">0</span>
+            <span class="stat-label">Resolved</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Issue Tracker &mdash; Built with HTML, CSS & JavaScript</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // Update stats on home page
+    document.addEventListener('DOMContentLoaded', function() {
+      const issues = getIssuesFromStorage();
+      const totalIssues = issues.length;
+      const resolvedIssues = issues.filter(i => i.resolved).length;
+      const openIssues = totalIssues - resolvedIssues;
+      
+      document.getElementById('totalIssues').textContent = totalIssues;
+      document.getElementById('openIssues').textContent = openIssues;
+      document.getElementById('resolvedIssues').textContent = resolvedIssues;
+    });
+  </script>
+</body>
+</html>

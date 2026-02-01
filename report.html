@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Issue - Issue Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-brand">IssueTracker</a>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+        <span class="hamburger"></span>
+      </button>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html" class="nav-link">Overview</a></li>
+        <li><a href="report.html" class="nav-link active">New Issue</a></li>
+        <li><a href="view.html" class="nav-link">All Issues</a></li>
+      </ul>
+    </div>
+  </nav>
+<br>
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- Page Header -->
+    <h1 style="text-align:center;">REPORT ISSUES</h1>
+    <p style="text-align: center; color: grey;">Submit a new issue with all the relevant details to help your team address it quickly.</p>
+
+    <!-- Report Form Section -->
+    <section class="section">
+      <div class="container">
+        <form id="issueForm" class="issue-form">
+
+          <div class="form-group">
+            <label for="issueTitle">Issue Title</label>
+            <input 
+              type="text" 
+              id="issueTitle" 
+              name="title" 
+              placeholder="e.g., Login button not responding on mobile"
+              required
+            >
+            <span class="form-hint">A concise summary of the issue</span>
+          </div>
+
+          <div class="form-group">
+            <label for="issueDescription">Description</label>
+            <textarea 
+              id="issueDescription" 
+              name="description" 
+              rows="6"
+              placeholder="Describe the issue in detail..."
+              required
+            ></textarea>
+            <span class="form-hint">Be as detailed as possible</span>
+          </div>
+
+          <div class="form-group">
+            <label for="issuePriority">Priority Level</label>
+            <select id="issuePriority" name="priority" required>
+              <option value="">Select priority...</option>
+              <option value="low">Low - Minor issue</option>
+              <option value="medium">Medium - Important</option>
+              <option value="high">High - Critical</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-large">Create Issue</button>
+            <button type="reset" class="btn btn-secondary btn-large">Clear Form</button>
+          </div>
+
+        </form>
+
+        <div id="successMessage" class="success-message" style="display:none;">
+          <h3>Issue Created Successfully</h3>
+          <p>Your issue has been logged.</p>
+          <button onclick="hideSuccessMessage()" class="btn btn-secondary btn-large">
+            Create Another
+          </button>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>Issue Tracker — Built with HTML, CSS & JavaScript</p>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    const issueForm = document.getElementById('issueForm');
+    const successMessage = document.getElementById('successMessage');
+
+    issueForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      const title = issueTitle.value.trim();
+      const description = issueDescription.value.trim();
+      const priority = issuePriority.value;
+
+      if (!title || !description || !priority) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      createIssue({ title, description, priority });
+
+      issueForm.style.display = 'none';
+      successMessage.style.display = 'block';
+    });
+
+    function hideSuccessMessage() {
+      successMessage.style.display = 'none';
+      issueForm.style.display = 'block';
+      issueForm.reset();
+    }
+  </script>
+
+</body>
+</html>
