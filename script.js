@@ -10,6 +10,49 @@
 // Key used to store issues in localStorage
 const STORAGE_KEY = 'issueReporter_issues';
 
+// Available tags for categorization
+const AVAILABLE_TAGS = ['bug', 'feature', 'enhancement', 'documentation', 'performance', 'security', 'ui', 'backend'];
+
+// ========================================
+// Toast Notification System
+// ========================================
+
+/**
+ * Shows a toast notification
+ * @param {string} message - The message to display
+ * @param {string} type - Type of toast: 'success', 'error', 'info', 'warning'
+ * @param {number} duration - Duration in milliseconds
+ */
+function showToast(message, type = 'info', duration = 3000) {
+  // Remove existing toasts
+  const existingToast = document.querySelector('.toast-notification');
+  if (existingToast) {
+    existingToast.remove();
+  }
+
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `toast-notification toast-${type}`;
+  toast.innerHTML = `
+    <span class="toast-message">${message}</span>
+    <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+  `;
+
+  // Add to document
+  document.body.appendChild(toast);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    toast.classList.add('toast-show');
+  });
+
+  // Auto remove
+  setTimeout(() => {
+    toast.classList.remove('toast-show');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
 // ========================================
 // Data Management Functions
 // ========================================
@@ -77,7 +120,7 @@ function escapeHTML(text) {
 
 /**
  * Creates a new issue and adds it to storage
- * @param {Object} issueData - Object containing title, description, and priority
+ * @param {Object} issueData - Object containing title, description, priority, and optional tags
  * @returns {Object} The newly created issue with id and date
  */
 function createIssue(issueData) {
@@ -87,8 +130,10 @@ function createIssue(issueData) {
     title: issueData.title,
     description: issueData.description,
     priority: issueData.priority,
+    tags: issueData.tags || [],
     date: new Date().toISOString(),
-    resolved: false
+    resolved: false,
+    views: 0
   };
 
   // Get existing issues and add new one at the beginning
@@ -99,6 +144,114 @@ function createIssue(issueData) {
   saveIssuesToStorage(issues);
   
   return newIssue;
+}
+
+// ========================================
+// Export Functions
+// ========================================
+
+/**
+ * Exports all issues to JSON file
+ */
+function exportToJSON() {
+  const issues = getIssuesFromStorage();
+  const dataStr = JSON.stringify(issues, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(dataBlob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `issues_export_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  
+  showToast('Issues exported to JSON', 'success');
+}
+
+/**
+ * Exports all issues to CSV file
+ */
+function exportToCSV() {
+  const issues = getIssuesFromStorage();
+  
+  if (issues.length === 0) {
+    showToast('No issues to export', 'warning');
+    return;
+  }
+  
+  // CSV headers
+  const headers = ['ID', 'Title', 'Description', 'Priority', 'Tags', 'Status', 'Date Created'];
+  
+  // Convert issues to CSV rows
+  const rows = issues.map(issue => [
+    issue.id,
+    `"${(issue.title || '').replace(/"/g, '""')}"`,
+    `"${(issue.description || '').replace(/"/g, '""')}"`,
+    issue.priority,
+    (issue.tags || []).join(';'),
+    issue.resolved ? 'Resolved' : 'Open',
+    new Date(issue.date).toLocaleString()
+  ]);
+  
+  // Combine headers and rows
+  const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `issues_export_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  
+  showToast('Issues exported to CSV', 'success');
+}
+
+// ========================================
+// Statistics Functions
+// ========================================
+
+/**
+ * Gets comprehensive statistics about issues
+ * @returns {Object} Statistics object
+ */
+function getIssueStats() {
+  const issues = getIssuesFromStorage();
+  const total = issues.length;
+  const resolved = issues.filter(i => i.resolved).length;
+  const open = total - resolved;
+  
+  const byPriority = {
+    high: issues.filter(i => i.priority === 'high').length,
+    medium: issues.filter(i => i.priority === 'medium').length,
+    low: issues.filter(i => i.priority === 'low').length
+  };
+  
+  const byTag = {};
+  issues.forEach(issue => {
+    (issue.tags || []).forEach(tag => {
+      byTag[tag] = (byTag[tag] || 0) + 1;
+    });
+  });
+  
+  // Calculate trends (issues created in last 7 days)
+  const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+  const recentIssues = issues.filter(i => new Date(i.date).getTime() > oneWeekAgo).length;
+  
+  return {
+    total,
+    resolved,
+    open,
+    byPriority,
+    byTag,
+    recentIssues,
+    resolutionRate: total > 0 ? Math.round((resolved / total) * 100) : 0
+  };
 }
 
 /**

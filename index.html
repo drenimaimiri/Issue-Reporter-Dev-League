@@ -19,7 +19,6 @@
       <ul class="nav-links" id="navLinks">
         <li><a href="index.html" class="nav-link active">Overview</a></li>
         <li><a href="report.html" class="nav-link">New Issue</a></li>
-        <li><a href="view.html" class="nav-link">All Issues</a></li>
       </ul>
     </div>
   </nav>
@@ -31,18 +30,10 @@
       <h1>Issue Tracker</h1>
       <p>A streamlined way to track, prioritize, and resolve issues. Built for teams that move fast.</p>
     </section>
-
-    <!-- Features Section -->
-    <section class="section">
-      <div class="container">
-        <div class="section-header">
-          <h2 class="section-title">Quick Actions</h2>
-        </div>
-        
-        <div class="features-grid">
-          <!-- Feature 1 -->
+    <!-- Feature 1 -->
           <div class="feature-card">
-            <div class="feature-icon">
+            <div class="feature-box">
+              <div class="feature-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -51,82 +42,344 @@
             <h3>Create Issue</h3>
             <p>Submit new issues with detailed descriptions, priorities, and context for your team.</p>
             <a href="report.html" class="btn btn-primary">New Issue</a>
+            </div>
+          </div>
+
+    <!-- Quick Actions Section -->
+    <section class="section" style="padding: var(--space-8) 0;">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Quick Actions</h2>
+        </div>
+        
+        <div class="quick-actions-bar" style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-bottom: var(--space-6);">
+          <a href="report.html" class="btn btn-primary">Create New Issue</a>
+          <button onclick="loadExampleIssues()" class="btn btn-secondary">Load Examples</button>
+          <button onclick="clearAllIssues()" class="btn btn-danger">Clear All</button>
+        </div>
+        
+        <!-- Filters -->
+        <div class="filter-bar" style="background: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-lg); border: 1px solid var(--border-default);">
+          <div class="filter-group">
+            <label for="filterPriority">Priority</label>
+            <select id="filterPriority">
+              <option value="all">All Priorities</option>
+              <option value="high">High Priority</option>
+              <option value="medium">Medium Priority</option>
+              <option value="low">Low Priority</option>
+            </select>
           </div>
           
-          <!-- Feature 2 -->
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="8" y1="6" x2="21" y2="6"></line>
-                <line x1="8" y1="12" x2="21" y2="12"></line>
-                <line x1="8" y1="18" x2="21" y2="18"></line>
-                <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                <line x1="3" y1="18" x2="3.01" y2="18"></line>
-              </svg>
-            </div>
-            <h3>Browse Issues</h3>
-            <p>View and filter all reported issues by priority, status, and date created.</p>
-            <a href="view.html" class="btn btn-primary">View All</a>
+          <div class="filter-group">
+            <label for="filterStatus">Status</label>
+            <select id="filterStatus">
+              <option value="all">All Statuses</option>
+              <option value="open">Open Only</option>
+              <option value="resolved">Resolved Only</option>
+            </select>
           </div>
-          
-          <!-- Feature 3 -->
-          <div class="feature-card">
-            <div class="feature-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </div>
-            <h3>Resolve & Track</h3>
-            <p>Mark issues as resolved and track progress with real-time statistics.</p>
-            <a href="view.html" class="btn btn-primary">Manage</a>
-          </div>
+        </div>
+        
+        <!-- Issue count -->
+        <div class="issue-count" style="margin-top: var(--space-4);">
+          Showing <span id="displayedCount">0</span> of <span id="totalCount">0</span> issues
         </div>
       </div>
     </section>
 
-    <!-- Stats Section -->
+    <!-- Issues List Section -->
+    <section class="section">
+      <div class="container">
+        <!-- Issues will be dynamically inserted here -->
+        <div id="issuesList" class="issues-list">
+          <p class="no-issues" id="noIssuesMessage">
+            No issues found. <a href="report.html">Create your first issue</a> or 
+            <button onclick="loadExampleIssues()" class="link-btn">load example issues</button>.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+
+
+  <script src="script.js"></script>
+  <script>
+    // DOM Elements for view page
+    const issuesList = document.getElementById('issuesList');
+    const noIssuesMessage = document.getElementById('noIssuesMessage');
+    const filterPriority = document.getElementById('filterPriority');
+    const filterStatus = document.getElementById('filterStatus');
+    const displayedCount = document.getElementById('displayedCount');
+    const totalCount = document.getElementById('totalCount');
+
+    // Example issues data - 10 issues
+    const exampleIssues = [
+      {
+        id: 'ex1',
+        title: 'Login button not responding on mobile devices',
+        description: 'When attempting to log in on mobile devices (both iOS and Android), the login button does not respond to taps. Users are unable to authenticate through mobile browsers. This affects a significant portion of our user base.',
+        priority: 'high',
+        date: new Date(Date.now() - 86400000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex2',
+        title: 'Dashboard performance degradation',
+        description: 'The main dashboard takes over 5 seconds to load initial data. Performance monitoring shows the bottleneck is in the API response time for user statistics. Multiple users have reported this issue.',
+        priority: 'medium',
+        date: new Date(Date.now() - 172800000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex3',
+        title: 'Typo in welcome notification',
+        description: 'There is a spelling mistake in the welcome notification message. "Welcom" should be corrected to "Welcome". This is a minor cosmetic issue that needs addressing.',
+        priority: 'low',
+        date: new Date(Date.now() - 259200000).toISOString(),
+        resolved: true
+      },
+      {
+        id: 'ex4',
+        title: 'Payment gateway timeout for international cards',
+        description: 'International credit card transactions are timing out during the payment processing step. The gateway returns a 504 error after 30 seconds. This is blocking international revenue.',
+        priority: 'high',
+        date: new Date(Date.now() - 43200000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex5',
+        title: 'Email notification delivery delays',
+        description: 'Users report receiving email notifications 2-3 hours after the triggering event. This affects password reset flows and order confirmations. Email queue may need investigation.',
+        priority: 'medium',
+        date: new Date(Date.now() - 345600000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex6',
+        title: 'Database connection pool exhaustion',
+        description: 'Under high load, the application runs out of database connections causing 500 errors. Need to implement connection pooling or increase pool size. Affecting production during peak hours.',
+        priority: 'high',
+        date: new Date(Date.now() - 120000000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex7',
+        title: 'Dark mode toggle not persisting',
+        description: 'When users enable dark mode and refresh the page, the setting resets to light mode. The preference should be stored in localStorage and applied on page load.',
+        priority: 'low',
+        date: new Date(Date.now() - 400000000).toISOString(),
+        resolved: true
+      },
+      {
+        id: 'ex8',
+        title: 'File upload size limit error message unclear',
+        description: 'When users try to upload files larger than 10MB, the error message just says "Upload failed" without explaining the size limit. Need more descriptive error handling.',
+        priority: 'medium',
+        date: new Date(Date.now() - 500000000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex9',
+        title: 'Search functionality returns no results for partial matches',
+        description: 'The search feature only works with exact matches. Users expect partial matching and fuzzy search. For example, searching "admin" should return "administrator".',
+        priority: 'medium',
+        date: new Date(Date.now() - 600000000).toISOString(),
+        resolved: false
+      },
+      {
+        id: 'ex10',
+        title: 'SSL certificate expiring in 7 days',
+        description: 'The SSL certificate for the main domain is expiring soon. Need to renew before expiration to avoid security warnings and service disruption. Auto-renewal may have failed.',
+        priority: 'high',
+        date: new Date(Date.now() - 50000000).toISOString(),
+        resolved: false
+      }
+    ];
+
+    /**
+     * Loads example issues into localStorage
+     */
+    function loadExampleIssues() {
+      console.log('[v0] Loading example issues...');
+      const existingIssues = getIssuesFromStorage();
+      console.log('[v0] Existing issues:', existingIssues.length);
+      
+      // Add example issues that don't already exist
+      const newExamples = exampleIssues.filter(ex => 
+        !existingIssues.some(existing => existing.id === ex.id)
+      );
+      
+      console.log('[v0] New examples to add:', newExamples.length);
+      
+      if (newExamples.length === 0) {
+        alert('Example issues are already loaded.');
+        return;
+      }
+      
+      const updatedIssues = [...newExamples, ...existingIssues];
+      saveIssuesToStorage(updatedIssues);
+      console.log('[v0] Saved issues, total now:', updatedIssues.length);
+      
+      renderFilteredIssues();
+    }
+
+    /**
+     * Clears all issues from localStorage
+     */
+    function clearAllIssues() {
+      if (confirm('Are you sure you want to delete all issues? This action cannot be undone.')) {
+        saveIssuesToStorage([]);
+        renderFilteredIssues();
+        showToast('All issues cleared successfully', 'success');
+      }
+    }
+
+    /**
+     * Renders issues based on current filter settings
+     */
+    function renderFilteredIssues() {
+      console.log('[v0] Rendering filtered issues...');
+      const issues = getIssuesFromStorage();
+      console.log('[v0] Total issues from storage:', issues.length);
+      const priorityFilter = filterPriority.value;
+      const statusFilter = filterStatus.value;
+      
+      // Apply filters
+      let filteredIssues = issues.filter(issue => {
+        // Priority filter
+        if (priorityFilter !== 'all' && issue.priority !== priorityFilter) {
+          return false;
+        }
+        
+        // Status filter
+        if (statusFilter === 'open' && issue.resolved) {
+          return false;
+        }
+        if (statusFilter === 'resolved' && !issue.resolved) {
+          return false;
+        }
+        
+        return true;
+      });
+      
+      // Update counts
+      totalCount.textContent = issues.length;
+      displayedCount.textContent = filteredIssues.length;
+      
+      // Check if there are any issues
+      if (filteredIssues.length === 0) {
+        noIssuesMessage.style.display = 'block';
+        const issueCards = issuesList.querySelectorAll('.issue-card');
+        issueCards.forEach(card => card.remove());
+        return;
+      }
+      
+      noIssuesMessage.style.display = 'none';
+      
+      // Generate HTML for all filtered issues
+      const issuesHTML = filteredIssues.map(issue => createIssueCardHTML(issue)).join('');
+      issuesList.innerHTML = issuesHTML;
+    }
+
+    /**
+     * Creates HTML for a single issue card (overview view - no actions)
+     */
+    function createIssueCardHTML(issue) {
+      const priorityClass = `priority-${issue.priority}`;
+      const resolvedClass = issue.resolved ? 'resolved' : '';
+      const tags = issue.tags || [];
+      
+      // Build image indicator if present
+      let hasImageIndicator = issue.image ? `<span style="color: var(--text-muted); font-size: 12px; margin-left: 8px;">📷</span>` : '';
+      
+      // Build link indicator if present
+      let hasLinkIndicator = issue.link ? `<span style="color: var(--text-muted); font-size: 12px; margin-left: 8px;">🔗</span>` : '';
+      
+      return `
+        <article class="issue-card ${resolvedClass}" data-id="${issue.id}">
+          <div class="issue-header">
+            <h3 class="issue-title">${escapeHTML(issue.title)}${hasImageIndicator}${hasLinkIndicator}</h3>
+            <span class="priority-badge ${priorityClass}">${issue.priority}</span>
+          </div>
+          
+          ${tags.length > 0 ? `
+            <div class="tags-container">
+              ${tags.slice(0, 3).map(tag => `<span class="tag tag-${tag}">${tag}</span>`).join('')}
+              ${tags.length > 3 ? `<span class="tag" style="background: var(--bg-tertiary);">+${tags.length - 3}</span>` : ''}
+            </div>
+          ` : ''}
+          
+          <p class="issue-description">${escapeHTML(issue.description)}</p>
+          
+          <div class="issue-meta">
+            <span class="issue-date">${formatDate(issue.date)}</span>
+            ${issue.resolved 
+              ? '<span class="resolved-badge">Resolved</span>' 
+              : '<span style="color: var(--text-muted); font-size: 12px;">Open</span>'
+            }
+          </div>
+        </article>
+      `;
+    }
+
+    // Event listeners for filters
+    filterPriority.addEventListener('change', renderFilteredIssues);
+    filterStatus.addEventListener('change', renderFilteredIssues);
+
+    // Initialize the page immediately (script is at bottom of body)
+    renderFilteredIssues();
+    console.log('[v0] View page initialized, issues loaded:', getIssuesFromStorage().length);
+  </script>
+
+    <!-- Enhanced Stats Section -->
     <section class="section stats-section">
       <div class="container">
         <div class="section-header">
           <h2 class="section-title">Statistics</h2>
+          <a href="view.html" class="btn btn-secondary" style="font-size: 13px; padding: var(--space-2) var(--space-4);">View All Issues</a>
         </div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <span class="stat-number" id="totalIssues">0</span>
-            <span class="stat-label">Total Issues</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-number" id="openIssues">0</span>
-            <span class="stat-label">Open</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-number" id="resolvedIssues">0</span>
-            <span class="stat-label">Resolved</span>
-          </div>
+        <div id="enhancedStats" class="stats-overview" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+          <!-- Stats will be dynamically inserted here -->
         </div>
       </div>
     </section>
+
+    <script>
+      // Update enhanced stats on home page
+      document.addEventListener('DOMContentLoaded', function() {
+        const stats = getIssueStats();
+        const enhancedStats = document.getElementById('enhancedStats');
+        
+        enhancedStats.innerHTML = `
+          <div class="stat-item">
+            <span class="stat-value">${stats.total}</span>
+            <span class="stat-label">Total Issues</span>
+            ${stats.recentIssues > 0 ? `<span class="stat-trend up">+${stats.recentIssues} this week</span>` : ''}
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" style="color: var(--status-success);">${stats.resolved}</span>
+            <span class="stat-label">Resolved</span>
+            <div class="progress-bar">
+              <div class="progress-fill success" style="width: ${stats.resolutionRate}%"></div>
+            </div>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" style="color: var(--status-warning);">${stats.open}</span>
+            <span class="stat-label">Open</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" style="color: var(--status-danger);">${stats.byPriority.high}</span>
+            <span class="stat-label">High Priority</span>
+          </div>
+        `;
+      });
+    </script>
   </main>
 
   <!-- Footer -->
   <footer class="footer">
     <p>Issue Tracker &mdash; Built with HTML, CSS & JavaScript</p>
   </footer>
-
-  <script src="script.js"></script>
-  <script>
-    // Update stats on home page
-    document.addEventListener('DOMContentLoaded', function() {
-      const issues = getIssuesFromStorage();
-      const totalIssues = issues.length;
-      const resolvedIssues = issues.filter(i => i.resolved).length;
-      const openIssues = totalIssues - resolvedIssues;
-      
-      document.getElementById('totalIssues').textContent = totalIssues;
-      document.getElementById('openIssues').textContent = openIssues;
-      document.getElementById('resolvedIssues').textContent = resolvedIssues;
-    });
-  </script>
 </body>
 </html>

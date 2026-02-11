@@ -23,18 +23,48 @@
       </ul>
     </div>
   </nav>
-<br>
+
   <!-- Main Content -->
   <main class="main-content">
     <!-- Page Header -->
-      <h1 style="text-align: center;">All Issues</h1>
-      <p style="text-align: center; color: grey;">Browse, filter, and manage all tracked issues in one place.</p>
-   <br>
-<br>
-    <!-- Filter & Actions Bar -->
+    <section class="hero" style="padding: var(--space-16) var(--space-6);">
+      <h1>All Issues</h1>
+      <p>Browse, filter, and manage all tracked issues in one place.</p>
+    </section>
+
+    <!-- Stats Dashboard -->
+    <section class="section" style="padding: var(--space-8) 0; background: var(--bg-secondary);">
+      <div class="container">
+        <div class="stats-overview" id="statsOverview">
+          <!-- Stats will be dynamically inserted here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Enhanced Filter & Actions Bar -->
     <section class="filter-section">
       <div class="container">
-        <div class="filter-bar">
+        <!-- Search and Sort Row -->
+        <div style="display: flex; gap: var(--space-4); flex-wrap: wrap; margin-bottom: var(--space-4); align-items: flex-end;">
+          <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search issues by title, description, or tags...">
+          </div>
+          
+          <div class="sort-control">
+            <label for="sortBy">Sort by:</label>
+            <select id="sortBy">
+              <option value="date-desc">Newest First</option>
+              <option value="date-asc">Oldest First</option>
+              <option value="priority-desc">Priority (High → Low)</option>
+              <option value="priority-asc">Priority (Low → High)</option>
+              <option value="title-asc">Title (A-Z)</option>
+              <option value="title-desc">Title (Z-A)</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Filters Row -->
+        <div class="filter-bar" style="background: var(--bg-tertiary); padding: var(--space-4); border-radius: var(--radius-lg);">
           <div class="filter-group">
             <label for="filterPriority">Priority</label>
             <select id="filterPriority">
@@ -54,14 +84,34 @@
             </select>
           </div>
           
-          <div class="filter-actions">
+          <div class="filter-group">
+            <label for="filterTag">Tag</label>
+            <select id="filterTag">
+              <option value="all">All Tags</option>
+              <option value="bug">Bug</option>
+              <option value="feature">Feature</option>
+              <option value="enhancement">Enhancement</option>
+              <option value="documentation">Documentation</option>
+              <option value="performance">Performance</option>
+              <option value="security">Security</option>
+              <option value="ui">UI/UX</option>
+              <option value="backend">Backend</option>
+            </select>
+          </div>
+          
+          <div class="filter-actions" style="margin-left: auto;">
+            <button onclick="exportToJSON()" class="btn btn-export" title="Export as JSON">Export JSON</button>
+            <button onclick="exportToCSV()" class="btn btn-export" title="Export as CSV">Export CSV</button>
             <button onclick="loadExampleIssues()" class="btn btn-secondary">Load Examples</button>
             <button onclick="clearAllIssues()" class="btn btn-danger">Clear All</button>
           </div>
         </div>
         
+        <!-- Active Filters Display -->
+        <div id="activeFilters" style="margin-top: var(--space-3); display: flex; gap: var(--space-2); flex-wrap: wrap;"></div>
+        
         <!-- Issue count -->
-        <div class="issue-count">
+        <div class="issue-count" style="margin-top: var(--space-4);">
           Showing <span id="displayedCount">0</span> of <span id="totalCount">0</span> issues
         </div>
       </div>
@@ -81,6 +131,33 @@
     </section>
   </main>
 
+  <!-- Keyboard Shortcuts Help -->
+  <div class="shortcuts-help">
+    <button class="shortcuts-toggle" onclick="toggleShortcutsModal()" title="Keyboard shortcuts">?</button>
+  </div>
+  
+  <div class="shortcuts-modal" id="shortcutsModal" onclick="if(event.target === this) toggleShortcutsModal()">
+    <div class="shortcuts-content">
+      <h3>Keyboard Shortcuts</h3>
+      <div class="shortcut-item">
+        <span>Focus search</span>
+        <span class="shortcut-keys"><kbd>/</kbd></span>
+      </div>
+      <div class="shortcut-item">
+        <span>Create new issue</span>
+        <span class="shortcut-keys"><kbd>n</kbd></span>
+      </div>
+      <div class="shortcut-item">
+        <span>Clear all filters</span>
+        <span class="shortcut-keys"><kbd>esc</kbd></span>
+      </div>
+      <div class="shortcut-item">
+        <span>Show/hide shortcuts</span>
+        <span class="shortcut-keys"><kbd>?</kbd></span>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="footer">
     <p>Issue Tracker &mdash; Built with HTML, CSS & JavaScript</p>
@@ -93,16 +170,22 @@
     const noIssuesMessage = document.getElementById('noIssuesMessage');
     const filterPriority = document.getElementById('filterPriority');
     const filterStatus = document.getElementById('filterStatus');
+    const filterTag = document.getElementById('filterTag');
+    const searchInput = document.getElementById('searchInput');
+    const sortBy = document.getElementById('sortBy');
     const displayedCount = document.getElementById('displayedCount');
     const totalCount = document.getElementById('totalCount');
+    const statsOverview = document.getElementById('statsOverview');
+    const activeFilters = document.getElementById('activeFilters');
 
-    // Example issues data - 10 issues
+    // Example issues data - 10 issues with tags
     const exampleIssues = [
       {
         id: 'ex1',
         title: 'Login button not responding on mobile devices',
         description: 'When attempting to log in on mobile devices (both iOS and Android), the login button does not respond to taps. Users are unable to authenticate through mobile browsers. This affects a significant portion of our user base.',
         priority: 'high',
+        tags: ['bug', 'ui'],
         date: new Date(Date.now() - 86400000).toISOString(),
         resolved: false
       },
@@ -111,6 +194,7 @@
         title: 'Dashboard performance degradation',
         description: 'The main dashboard takes over 5 seconds to load initial data. Performance monitoring shows the bottleneck is in the API response time for user statistics. Multiple users have reported this issue.',
         priority: 'medium',
+        tags: ['performance', 'backend'],
         date: new Date(Date.now() - 172800000).toISOString(),
         resolved: false
       },
@@ -119,6 +203,7 @@
         title: 'Typo in welcome notification',
         description: 'There is a spelling mistake in the welcome notification message. "Welcom" should be corrected to "Welcome". This is a minor cosmetic issue that needs addressing.',
         priority: 'low',
+        tags: ['documentation', 'ui'],
         date: new Date(Date.now() - 259200000).toISOString(),
         resolved: true
       },
@@ -127,6 +212,7 @@
         title: 'Payment gateway timeout for international cards',
         description: 'International credit card transactions are timing out during the payment processing step. The gateway returns a 504 error after 30 seconds. This is blocking international revenue.',
         priority: 'high',
+        tags: ['bug', 'backend', 'security'],
         date: new Date(Date.now() - 43200000).toISOString(),
         resolved: false
       },
@@ -135,6 +221,7 @@
         title: 'Email notification delivery delays',
         description: 'Users report receiving email notifications 2-3 hours after the triggering event. This affects password reset flows and order confirmations. Email queue may need investigation.',
         priority: 'medium',
+        tags: ['backend'],
         date: new Date(Date.now() - 345600000).toISOString(),
         resolved: false
       },
@@ -143,6 +230,7 @@
         title: 'Database connection pool exhaustion',
         description: 'Under high load, the application runs out of database connections causing 500 errors. Need to implement connection pooling or increase pool size. Affecting production during peak hours.',
         priority: 'high',
+        tags: ['performance', 'backend'],
         date: new Date(Date.now() - 120000000).toISOString(),
         resolved: false
       },
@@ -151,6 +239,7 @@
         title: 'Dark mode toggle not persisting',
         description: 'When users enable dark mode and refresh the page, the setting resets to light mode. The preference should be stored in localStorage and applied on page load.',
         priority: 'low',
+        tags: ['feature', 'ui'],
         date: new Date(Date.now() - 400000000).toISOString(),
         resolved: true
       },
@@ -159,6 +248,7 @@
         title: 'File upload size limit error message unclear',
         description: 'When users try to upload files larger than 10MB, the error message just says "Upload failed" without explaining the size limit. Need more descriptive error handling.',
         priority: 'medium',
+        tags: ['enhancement', 'ui'],
         date: new Date(Date.now() - 500000000).toISOString(),
         resolved: false
       },
@@ -167,6 +257,7 @@
         title: 'Search functionality returns no results for partial matches',
         description: 'The search feature only works with exact matches. Users expect partial matching and fuzzy search. For example, searching "admin" should return "administrator".',
         priority: 'medium',
+        tags: ['enhancement'],
         date: new Date(Date.now() - 600000000).toISOString(),
         resolved: false
       },
@@ -175,6 +266,7 @@
         title: 'SSL certificate expiring in 7 days',
         description: 'The SSL certificate for the main domain is expiring soon. Need to renew before expiration to avoid security warnings and service disruption. Auto-renewal may have failed.',
         priority: 'high',
+        tags: ['security', 'backend'],
         date: new Date(Date.now() - 50000000).toISOString(),
         resolved: false
       }
@@ -196,7 +288,7 @@
       console.log('[v0] New examples to add:', newExamples.length);
       
       if (newExamples.length === 0) {
-        alert('Example issues are already loaded.');
+        showToast('Example issues are already loaded', 'info');
         return;
       }
       
@@ -205,6 +297,7 @@
       console.log('[v0] Saved issues, total now:', updatedIssues.length);
       
       renderFilteredIssues();
+      showToast(`Loaded ${newExamples.length} example issues`, 'success');
     }
 
     /**
@@ -218,14 +311,18 @@
     }
 
     /**
-     * Renders issues based on current filter settings
+     * Renders issues based on current filter, search, and sort settings
      */
     function renderFilteredIssues() {
       console.log('[v0] Rendering filtered issues...');
       const issues = getIssuesFromStorage();
       console.log('[v0] Total issues from storage:', issues.length);
+      
       const priorityFilter = filterPriority.value;
       const statusFilter = filterStatus.value;
+      const tagFilter = filterTag.value;
+      const searchQuery = searchInput.value.toLowerCase().trim();
+      const sortValue = sortBy.value;
       
       // Apply filters
       let filteredIssues = issues.filter(issue => {
@@ -242,12 +339,59 @@
           return false;
         }
         
+        // Tag filter
+        if (tagFilter !== 'all') {
+          const issueTags = issue.tags || [];
+          if (!issueTags.includes(tagFilter)) {
+            return false;
+          }
+        }
+        
+        // Search filter
+        if (searchQuery) {
+          const titleMatch = (issue.title || '').toLowerCase().includes(searchQuery);
+          const descMatch = (issue.description || '').toLowerCase().includes(searchQuery);
+          const tagMatch = (issue.tags || []).some(tag => tag.toLowerCase().includes(searchQuery));
+          
+          if (!titleMatch && !descMatch && !tagMatch) {
+            return false;
+          }
+        }
+        
         return true;
+      });
+      
+      // Apply sorting
+      filteredIssues.sort((a, b) => {
+        switch (sortValue) {
+          case 'date-desc':
+            return new Date(b.date) - new Date(a.date);
+          case 'date-asc':
+            return new Date(a.date) - new Date(b.date);
+          case 'priority-desc':
+            const priorityOrder = { high: 3, medium: 2, low: 1 };
+            return priorityOrder[b.priority] - priorityOrder[a.priority];
+          case 'priority-asc':
+            const priorityOrderAsc = { high: 3, medium: 2, low: 1 };
+            return priorityOrderAsc[a.priority] - priorityOrderAsc[b.priority];
+          case 'title-asc':
+            return (a.title || '').localeCompare(b.title || '');
+          case 'title-desc':
+            return (b.title || '').localeCompare(a.title || '');
+          default:
+            return 0;
+        }
       });
       
       // Update counts
       totalCount.textContent = issues.length;
       displayedCount.textContent = filteredIssues.length;
+      
+      // Update active filters display
+      updateActiveFilters();
+      
+      // Update stats
+      updateStats();
       
       // Check if there are any issues
       if (filteredIssues.length === 0) {
@@ -263,6 +407,80 @@
       const issuesHTML = filteredIssues.map(issue => createIssueCardHTML(issue)).join('');
       issuesList.innerHTML = issuesHTML;
     }
+    
+    /**
+     * Updates the active filters display
+     */
+    function updateActiveFilters() {
+      const filters = [];
+      
+      if (filterPriority.value !== 'all') {
+        filters.push({ type: 'Priority', value: filterPriority.value, clear: () => { filterPriority.value = 'all'; renderFilteredIssues(); } });
+      }
+      if (filterStatus.value !== 'all') {
+        filters.push({ type: 'Status', value: filterStatus.value, clear: () => { filterStatus.value = 'all'; renderFilteredIssues(); } });
+      }
+      if (filterTag.value !== 'all') {
+        filters.push({ type: 'Tag', value: filterTag.value, clear: () => { filterTag.value = 'all'; renderFilteredIssues(); } });
+      }
+      if (searchInput.value.trim()) {
+        filters.push({ type: 'Search', value: `"${searchInput.value.trim()}"`, clear: () => { searchInput.value = ''; renderFilteredIssues(); } });
+      }
+      
+      if (filters.length === 0) {
+        activeFilters.innerHTML = '';
+        return;
+      }
+      
+      activeFilters.innerHTML = filters.map(f => `
+        <span class="tag" style="cursor: pointer; background: var(--bg-elevated);" onclick="(${f.clear.toString()})()">
+          ${f.type}: ${f.value} ×
+        </span>
+      `).join('') + `
+        <button class="link-btn" onclick="clearAllFilters()">Clear all</button>
+      `;
+    }
+    
+    /**
+     * Clears all active filters
+     */
+    function clearAllFilters() {
+      filterPriority.value = 'all';
+      filterStatus.value = 'all';
+      filterTag.value = 'all';
+      searchInput.value = '';
+      renderFilteredIssues();
+    }
+    
+    /**
+     * Updates the stats dashboard
+     */
+    function updateStats() {
+      const stats = getIssueStats();
+      
+      statsOverview.innerHTML = `
+        <div class="stat-item">
+          <span class="stat-value">${stats.total}</span>
+          <span class="stat-label">Total Issues</span>
+          ${stats.recentIssues > 0 ? `<span class="stat-trend up">+${stats.recentIssues} this week</span>` : ''}
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" style="color: var(--status-success);">${stats.resolved}</span>
+          <span class="stat-label">Resolved</span>
+          <div class="progress-bar">
+            <div class="progress-fill success" style="width: ${stats.resolutionRate}%"></div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" style="color: var(--status-warning);">${stats.open}</span>
+          <span class="stat-label">Open</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">${stats.resolutionRate}%</span>
+          <span class="stat-label">Resolution Rate</span>
+        </div>
+      `;
+    }
 
     /**
      * Creates HTML for a single issue card
@@ -270,6 +488,31 @@
     function createIssueCardHTML(issue) {
       const priorityClass = `priority-${issue.priority}`;
       const resolvedClass = issue.resolved ? 'resolved' : '';
+      const tags = issue.tags || [];
+      
+      // Build image HTML if present
+      let imageHTML = '';
+      if (issue.image) {
+        imageHTML = `
+          <div class="issue-card-image">
+            <img src="${issue.image}" alt="Issue screenshot" onclick="window.open('${issue.image}', '_blank')">
+          </div>
+        `;
+      }
+      
+      // Build link HTML if present
+      let linkHTML = '';
+      if (issue.link) {
+        linkHTML = `
+          <a href="${issue.link}" target="_blank" rel="noopener noreferrer" class="issue-card-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            Related Link
+          </a>
+        `;
+      }
       
       return `
         <article class="issue-card ${resolvedClass}" data-id="${issue.id}">
@@ -278,7 +521,16 @@
             <span class="priority-badge ${priorityClass}">${issue.priority}</span>
           </div>
           
+          ${tags.length > 0 ? `
+            <div class="tags-container">
+              ${tags.map(tag => `<span class="tag tag-${tag}">${tag}</span>`).join('')}
+            </div>
+          ` : ''}
+          
           <p class="issue-description">${escapeHTML(issue.description)}</p>
+          
+          ${imageHTML}
+          ${linkHTML}
           
           <div class="issue-meta">
             <span class="issue-date">${formatDate(issue.date)}</span>
@@ -301,6 +553,7 @@
     function resolveIssue(issueId) {
       toggleResolve(issueId);
       renderFilteredIssues();
+      showToast('Issue marked as resolved', 'success');
     }
 
     /**
@@ -310,16 +563,72 @@
       if (confirm('Delete this issue permanently?')) {
         deleteIssue(issueId);
         renderFilteredIssues();
+        showToast('Issue deleted successfully', 'success');
+      }
+    }
+    
+    /**
+     * Clears all issues from localStorage with confirmation
+     */
+    function clearAllIssues() {
+      if (confirm('Are you sure you want to delete all issues? This action cannot be undone.')) {
+        saveIssuesToStorage([]);
+        renderFilteredIssues();
+        showToast('All issues cleared', 'success');
       }
     }
 
-    // Event listeners for filters
+    // Event listeners for filters and search
     filterPriority.addEventListener('change', renderFilteredIssues);
     filterStatus.addEventListener('change', renderFilteredIssues);
+    filterTag.addEventListener('change', renderFilteredIssues);
+    sortBy.addEventListener('change', renderFilteredIssues);
+    
+    // Search with debounce
+    let searchTimeout;
+    searchInput.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(renderFilteredIssues, 300);
+    });
 
-    // Initialize the page immediately (script is at bottom of body)
+    // Initialize the page
     renderFilteredIssues();
     console.log('[v0] View page initialized, issues loaded:', getIssuesFromStorage().length);
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      // Ignore if typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        if (e.key === 'Escape') {
+          e.target.blur();
+        }
+        return;
+      }
+      
+      switch(e.key) {
+        case '/':
+          e.preventDefault();
+          searchInput.focus();
+          break;
+        case 'n':
+        case 'N':
+          window.location.href = 'report.html';
+          break;
+        case 'Escape':
+          clearAllFilters();
+          break;
+
+        case '?':
+          toggleShortcutsModal();
+          break;
+      }
+    });
+    
+    // Toggle shortcuts modal
+    function toggleShortcutsModal() {
+      const modal = document.getElementById('shortcutsModal');
+      modal.classList.toggle('active');
+    }
   </script>
 </body>
 </html>

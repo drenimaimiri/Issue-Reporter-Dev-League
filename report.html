@@ -20,7 +20,6 @@
       <ul class="nav-links" id="navLinks">
         <li><a href="index.html" class="nav-link">Overview</a></li>
         <li><a href="report.html" class="nav-link active">New Issue</a></li>
-        <li><a href="view.html" class="nav-link">All Issues</a></li>
       </ul>
     </div>
   </nav>
@@ -71,6 +70,56 @@
             </select>
           </div>
 
+          <div class="form-group">
+            <label>Tags</label>
+            <div class="tag-selector" id="tagSelector">
+              <span class="tag-option" data-tag="bug">Bug</span>
+              <span class="tag-option" data-tag="feature">Feature</span>
+              <span class="tag-option" data-tag="enhancement">Enhancement</span>
+              <span class="tag-option" data-tag="documentation">Documentation</span>
+              <span class="tag-option" data-tag="performance">Performance</span>
+              <span class="tag-option" data-tag="security">Security</span>
+              <span class="tag-option" data-tag="ui">UI/UX</span>
+              <span class="tag-option" data-tag="backend">Backend</span>
+            </div>
+            <span class="form-hint">Select relevant tags to categorize this issue</span>
+          </div>
+
+          <div class="form-group">
+            <label for="issueLink">Related Link (Optional)</label>
+            <input 
+              type="url" 
+              id="issueLink" 
+              name="link" 
+              placeholder="https://example.com/resource"
+            >
+            <span class="form-hint">Add a URL to documentation, screenshots, or related resources</span>
+          </div>
+
+          <div class="form-group">
+            <label for="issueImage">Screenshot or Photo (Optional)</label>
+            <div class="file-upload">
+              <input 
+                type="file" 
+                id="issueImage" 
+                name="image" 
+                accept="image/*"
+                style="display: none;"
+              >
+              <label for="issueImage" class="file-upload-label">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span id="fileName">Click to upload image</span>
+              </label>
+              <button type="button" id="removeImage" class="btn btn-danger" style="display: none; margin-top: 10px;">Remove Image</button>
+            </div>
+            <div id="imagePreview" class="image-preview" style="display: none;"></div>
+            <span class="form-hint">Max file size: 5MB. Supported formats: JPG, PNG, GIF, WebP</span>
+          </div>
+
           <div class="form-actions">
             <button type="submit" class="btn btn-primary btn-large">Create Issue</button>
             <button type="reset" class="btn btn-secondary btn-large">Clear Form</button>
@@ -99,6 +148,72 @@
   <script>
     const issueForm = document.getElementById('issueForm');
     const successMessage = document.getElementById('successMessage');
+    const tagSelector = document.getElementById('tagSelector');
+    const issueImage = document.getElementById('issueImage');
+    const fileName = document.getElementById('fileName');
+    const removeImage = document.getElementById('removeImage');
+    const imagePreview = document.getElementById('imagePreview');
+    let selectedTags = [];
+    let uploadedImageBase64 = null;
+    
+    // Tag selection
+    tagSelector.addEventListener('click', function(e) {
+      if (e.target.classList.contains('tag-option')) {
+        const tag = e.target.dataset.tag;
+        e.target.classList.toggle('selected');
+        
+        if (e.target.classList.contains('selected')) {
+          selectedTags.push(tag);
+        } else {
+          selectedTags = selectedTags.filter(t => t !== tag);
+        }
+      }
+    });
+
+    // Image upload handling
+    issueImage.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // Check file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('Image must be less than 5MB', 'error');
+        issueImage.value = '';
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        showToast('Please select an image file', 'error');
+        issueImage.value = '';
+        return;
+      }
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        uploadedImageBase64 = event.target.result;
+        fileName.textContent = file.name;
+        removeImage.style.display = 'inline-flex';
+        
+        // Show preview
+        imagePreview.innerHTML = `<img src="${uploadedImageBase64}" alt="Preview">`;
+        imagePreview.style.display = 'block';
+        
+        showToast('Image uploaded successfully', 'success');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Remove image
+    removeImage.addEventListener('click', function() {
+      issueImage.value = '';
+      uploadedImageBase64 = null;
+      fileName.textContent = 'Click to upload image';
+      removeImage.style.display = 'none';
+      imagePreview.style.display = 'none';
+      imagePreview.innerHTML = '';
+    });
 
     issueForm.addEventListener('submit', function(event) {
       event.preventDefault();
@@ -106,22 +221,53 @@
       const title = issueTitle.value.trim();
       const description = issueDescription.value.trim();
       const priority = issuePriority.value;
+      const link = issueLink.value.trim();
 
       if (!title || !description || !priority) {
-        alert('Please fill in all required fields');
+        showToast('Please fill in all required fields', 'warning');
         return;
       }
 
-      createIssue({ title, description, priority });
+      // Validate URL if provided
+      if (link && !isValidURL(link)) {
+        showToast('Please enter a valid URL', 'error');
+        return;
+      }
+
+      createIssue({ 
+        title, 
+        description, 
+        priority, 
+        tags: selectedTags,
+        link: link || null,
+        image: uploadedImageBase64
+      });
 
       issueForm.style.display = 'none';
       successMessage.style.display = 'block';
+      showToast('Issue created successfully!', 'success');
     });
 
+    function isValidURL(string) {
+      try {
+        new URL(string);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
     function hideSuccessMessage() {
-      successMessage.style.display = 'none';
       issueForm.style.display = 'block';
+      successMessage.style.display = 'none';
       issueForm.reset();
+      selectedTags = [];
+      uploadedImageBase64 = null;
+      document.querySelectorAll('.tag-option').forEach(tag => tag.classList.remove('selected'));
+      fileName.textContent = 'Click to upload image';
+      removeImage.style.display = 'none';
+      imagePreview.style.display = 'none';
+      imagePreview.innerHTML = '';
     }
   </script>
 
